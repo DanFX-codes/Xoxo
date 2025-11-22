@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boomplay-Style Music Player</title>
+    <style>
+        :root {
+            --bg: #0b0b0d;
+            --card: #121214;
+            --accent: #ff7a00;
+            --muted: #9a9a9a;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(180deg, #050505 0%, #0e0e10 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .player {
+            width: 360px;
+            background: linear-gradient(180deg, var(--card), #0f0f10);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .cover {
+            width: 100%;
+            height: 200px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a1a, #0f0f0f);
+            position: relative;
+        }
+
+        .cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            background: var(--accent);
+            color: #111;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .artist {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 14px;
+        }
+
+        .big-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: inline-grid;
+            place-items: center;
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        .play-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: inline-grid;
+            place-items: center;
+            background: linear-gradient(180deg, var(--accent), #ff8a2a);
+            color: #0b0b0b;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 8px 20px rgba(255, 122, 0, 0.18);
+            border: none;
+            cursor: pointer;
+        }
+
+        .progress-wrap {
+            margin-top: 12px;
+        }
+
+        .time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress > .bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), #ffb37a);
+            border-radius: 8px;
+        }
+
+        .playlist {
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px;
+            border-radius: 8px;
+            max-height: 120px;
+            overflow: auto;
+        }
+
+        .track {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .track:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .track.active {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .track .tmeta {
+            flex: 1;
+        }
+
+        .track .tmeta .tname {
+            font-size: 14px;
+        }
+
+        .track .tmeta .tinfo {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        /* small screens */
+        @media (max-width: 380px) {
+            .player {
+                width: 92vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="player">
+        <div class="cover">
+            <div class="badge">PREMIUM</div>
+            <img src="https://via.placeholder.com/300x200/1a1a1a/ffffff?text=Album+Cover" alt="Album Cover">
+        </div>
+        
+        <div class="meta">
+            <div>
+                <div class="title" id="track-title">Your Track</div>
+                <div class="artist" id="track-artist">Unknown Artist</div>
+            </div>
+            <div style="text-align:right;color:var(--muted);font-size:12px">Boomplay-like</div>
+        </div>
+        
+        <div class="controls">
+            <div style="display:flex;gap:10px;align-items:center">
+                <button class="big-btn icon-btn" id="prev" title="Previous">⟲</button>
+                <button class="play-btn" id="play" title="Play/Pause">►</button>
+                <button class="big-btn icon-btn" id="next" title="Next">⟳</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <input id="volume" class="volume-slider" type="range" min="0" max="1" step="0.01" value="0.9">
+            </div>
+        </div>
+        
+        <div class="progress-wrap">
+            <div class="time">
+                <span id="current">0:00</span>
+                <span id="duration">0:00</span>
+            </div>
+            <div class="progress" id="progress">
+                <div class="bar" id="progress-bar"></div>
+            </div>
+        </div>
+        
+        <div class="playlist" id="playlist">
+            <!-- Tracks will be injected here by JS -->
+        </div>
+        
+        <div class="footer">
+            <div style="font-size:12px;color:var(--muted)">Local player • Offline ready</div>
+            <div>
+                <button class="icon-btn" id="repeat" title="Repeat">🔁</button>
+                <button class="icon-btn" id="shuffle" title="Shuffle">🔀</button>
+            </div>
+        </div>
+        
+        <!-- Hidden native audio element -->
+        <audio id="audio"></audio>
+    </div>
+
+    <script>
+        // === EDIT THESE: list your files here (place the mp3 file(s) in the same folder as this HTML) ===
+        const tracks = [
+            {
+                src: 'AUD-20250313-WA0001.mp3', // change if your filename is different
+                title: 'AUD-20250313-WA0001',
+                artist: 'Unknown Artist',
+                duration: ''
+            }
+            // To add more songs, copy the object and update src/title/artist
+        ];
+        // ===========================================================================================
+
+        const audio = document.getElementById('audio');
+        const playBtn = document.getElementById('play');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const vol = document.getElementById('volume');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progress-bar');
+        const currentTimeEl = document.getElementById('current');
+        const durationEl = document.getElementById('duration');
+        const playlistEl = document.getElementById('playlist');
+        const trackTitle = document.getElementById('track-title');
+        const trackArtist = document.getElementById('track-artist');
+        const repeatBtn = document.getElementById('repeat');
+        const shuffleBtn = document.getElementById('shuffle');
+
+        let idx = 0;
+        let isPlaying = false;
+        let isRepeat = false;
+        let isShuffle = false;
+
+        function loadTrack(i) {
+            const t = tracks[i];
+            audio.src = t.src;
+            trackTitle.textContent = t.title;
+            trackArtist.textContent = t.artist;
+            highlightActive();
+            
+            // try to load metadata for duration
+            audio.load();
+            audio.addEventListener('loadedmetadata', () => {
+                durationEl.textContent = formatTime(audio.duration);
+            }, { once: true });
+        }
+
+        function playPause() {
+            if (!audio.src) return;
+            
+            if (isPlaying) {
+                audio.pause();
+            } else {
+                audio.play();
+            }
+        }
+
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            playBtn.textContent = '❚❚';
+        });
+
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            playBtn.textContent = '►';
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            const pct = (audio.currentTime / audio.duration) * 100 || 0;
+            progressBar.style.width = pct + '%';
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        });
+
+        audio.addEventListener('ended', () => {
+            if (isRepeat) {
+                audio.currentTime = 0;
+                audio.play();
+                return;
+            }
+            
+            if (isShuffle) {
+                idx = Math.floor(Math.random() * tracks.length);
+                loadTrack(idx);
+                audio.play();
+                return;
+            }
+            
+            idx = (idx + 1) % tracks.length;
+            loadTrack(idx);
+            audio.play();
+        });
+
+        playBtn.addEventListener('click', playPause);
+
+        prevBtn.addEventListener('click', () => {
+            idx = (idx - 1 + tracks.length) % tracks.length;
+            loadTrack(idx);
+            if (isPlaying) audio.play();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            idx = (idx + 1) % tracks.length;
+            loadTrack(idx);
+            if (isPlaying) audio.play();
+        });
+
+        vol.addEventListener('input', () => {
+            audio.volume = vol.value;
+        });
+
+        progress.addEventListener('click', (e) => {
+            const rect = progress.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const pct = x / rect.width;
+            audio.currentTime = pct * audio.duration;
+        });
+
+        repeatBtn.addEventListener('click', () => {
+            isRepeat = !isRepeat;
+            repeatBtn.style.opacity = isRepeat ? 1 : 0.6;
+        });
+
+        shuffleBtn.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            shuffleBtn.style.opacity = isShuffle ? 1 : 0.6;
+        });
+
+        function formatTime(sec) {
+            if (!sec || isNaN(sec)) return '0:00';
+            const s = Math.floor(sec % 60).toString().padStart(2, '0');
+            const m = Math.floor(sec / 60);
+            return m + ':' + s;
+        }
+
+        function renderPlaylist() {
+            playlistEl.innerHTML = '';
+            
+            tracks.forEach((t, i) => {
+                const tr = document.createElement('div');
+                tr.className = 'track';
+                tr.dataset.index = i;
+                tr.innerHTML = `
+                    <div style="width:44px;height:44px;border-radius:6px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:700">
+                        ${i + 1}
+                    </div>
+                    <div class="tmeta">
+                        <div class="tname">${t.title}</div>
+                        <div class="tinfo">${t.artist}</div>
+                    </div>
+                    <div style="font-size:12px;color:var(--muted);min-width:40px;text-align:right" id="dur-${i}">
+                        ${t.duration || '--:--'}
+                    </div>
+                `;
+                
+                tr.addEventListener('click', () => {
+                    idx = i;
+                    loadTrack(idx);
+                    audio.play();
+                });
+                
+                playlistEl.appendChild(tr);
+                
+                // attempt to get duration (creates a temp audio)
+                const temp = document.createElement('audio');
+                temp.src = t.src;
+                temp.addEventListener('loadedmetadata', () => {
+                    const el = document.getElementById('dur-' + i);
+                    if (el) el.textContent = formatTime(temp.duration);
+                });
+            });
+            
+            highlightActive();
+        }
+
+        function highlightActive() {
+            const items = playlistEl.querySelectorAll('.track');
+            items.forEach(it => {
+                it.classList.toggle('active', Number(it.dataset.index) === idx);
+            });
+        }
+
+        // initialize
+        renderPlaylist();
+        loadTrack(idx);
+        audio.volume = vol.value;
+
+        // Accessibility: keyboard space toggles play
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                playPause();
+            }
+        });
+
+        // Helpful note in console
+        console.log('Player ready. Put your mp3 files in the same folder as this HTML and update the `tracks` array if needed.');
+        /music-player/
+    index.html
+    VID_20250817_094241_069_20251109_080019.mp3
+    </script>
+</body>
+</html>
